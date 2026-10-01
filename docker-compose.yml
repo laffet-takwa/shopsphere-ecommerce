@@ -1,0 +1,237 @@
+name: shopsphere
+
+x-backend: &backend
+  restart: unless-stopped
+  networks: [shopsphere]
+  environment: &backend-env
+    EUREKA_URL: http://discovery-server:8761/eureka/
+    KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    POSTGRES_USER: ${POSTGRES_USER:-shopsphere}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shopsphere_dev}
+    JWT_SECRET: ${JWT_SECRET:-ZGV2LW9ubHktc2VjcmV0LWtleS1tdXN0LWJlLWNoYW5nZWQtMzItYnl0ZXM=}
+    LOGSTASH_DESTINATION: logstash:5000
+  depends_on:
+    discovery-server:
+      condition: service_started
+    postgres:
+      condition: service_healthy
+    kafka:
+      condition: service_started
+    kafka-init:
+      condition: service_completed_successfully
+
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shopsphere_auth
+      POSTGRES_USER: ${POSTGRES_USER:-shopsphere}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shopsphere_dev}
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/01-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d shopsphere_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks: [shopsphere]
+
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    ports: ["27017:27017"]
+    volumes:
+      - mongo_data:/data/db
+      - ./infrastructure/mongodb/init.js:/docker-entrypoint-initdb.d/10-shopsphere.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks: [shopsphere]
+
+  kafka:
+    image: apache/kafka:3.9.1
+    restart: unless-stopped
+    ports: ["29092:29092"]
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,PLAINTEXT_HOST://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes: ["kafka_data:/var/lib/kafka/data"]
+    networks: [shopsphere]
+
+  kafka-init:
+    image: apache/kafka:3.9.1
+    restart: "no"
+    depends_on:
+      kafka: { condition: service_started }
+    entrypoint: ["/bin/bash", "/scripts/create-topics.sh"]
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_TOPIC_PARTITIONS: ${KAFKA_TOPIC_PARTITIONS:-3}
+      KAFKA_REPLICATION_FACTOR: 1
+    volumes:
+      - ./infrastructure/kafka/create-topics.sh:/scripts/create-topics.sh:ro
+    networks: [shopsphere]
+
+  discovery-server:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: infrastructure/docker/service.Dockerfile
+      args: { SERVICE: discovery-server }
+    ports: ["8761:8761"]
+    depends_on: []
+    environment:
+      SERVER_PORT: 8761
+
+  api-gateway:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: infrastructure/docker/service.Dockerfile
+      args: { SERVICE: api-gateway }
+    ports: ["8080:8080"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: 8080
+
+  auth-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: infrastructure/docker/service.Dockerfile
+      args: { SERVICE: auth-service }
+    environment:
+      <<: *backend-env
+      SERVER_PORT: 8081
+      AUTH_DB_URL: jdbc:postgresql://postgres:5432/shopsphere_auth
+      SHOPSPHERE_ADMIN_EMAIL: ${SHOPSPHERE_ADMIN_EMAIL:-}
+      SHOPSPHERE_ADMIN_PASSWORD: ${SHOPSPHERE_ADMIN_PASSWORD:-}
+
+  product-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: infrastructure/docker/service.Dockerfile
+      args: { SERVICE: product-service }
+    environment:
+      <<: *backend-env
+      SERVER_PORT: 8082
+      PRODUCT_DB_URL: jdbc:postgresql://postgres:5432/shopsphere_products
+
+  order-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: infrastructure/docker/service.Dockerfile
+      args: { SERVICE: order-service }
+    environment:
+      <<: *backend-env
+      SERVER_PORT: 8083
+      ORDER_DB_URL: jdbc:postgresql://postgres:5432/shopsphere_orders
+
+  inventory-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: infrastructure/docker/service.Dockerfile
+      args: { SERVICE: inventory-service }
+    depends_on:
+      discovery-server: { condition: service_started }
+      mongodb: { condition: service_healthy }
+      kafka: { condition: service_started }
+      kafka-init: { condition: service_completed_successfully }
+    environment:
+      <<: *backend-env
+      SERVER_PORT: 8084
+      MONGODB_URI: mongodb://mongodb:27017/shopsphere_inventory
+
+  payment-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: infrastructure/docker/service.Dockerfile
+      args: { SERVICE: payment-service }
+    environment:
+      <<: *backend-env
+      SERVER_PORT: 8085
+      PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/shopsphere_payments
+      PAYMENT_DECLINE_ABOVE_AMOUNT: ${PAYMENT_DECLINE_ABOVE_AMOUNT:-10000}
+
+  notification-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: infrastructure/docker/service.Dockerfile
+      args: { SERVICE: notification-service }
+    depends_on:
+      discovery-server: { condition: service_started }
+      mongodb: { condition: service_healthy }
+      kafka: { condition: service_started }
+      kafka-init: { condition: service_completed_successfully }
+    environment:
+      <<: *backend-env
+      SERVER_PORT: 8086
+      MONGODB_URI: mongodb://mongodb:27017/shopsphere_notifications
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.5
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports: ["9200:9200"]
+    volumes: ["elasticsearch_data:/usr/share/elasticsearch/data"]
+    networks: [shopsphere]
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.15.5
+    depends_on: [elasticsearch]
+    ports: ["5000:5000"]
+    volumes:
+      - ./infrastructure/elk/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    networks: [shopsphere]
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.5
+    depends_on: [elasticsearch]
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      TELEMETRY_ENABLED: "false"
+    ports: ["5601:5601"]
+    networks: [shopsphere]
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/frontend.Dockerfile
+      args: { VITE_API_URL: http://localhost:8080 }
+    restart: unless-stopped
+    depends_on: [api-gateway]
+    ports: ["3000:80"]
+    networks: [shopsphere]
+
+volumes:
+  postgres_data:
+  mongo_data:
+  kafka_data:
+  elasticsearch_data:
+
+networks:
+  shopsphere:
+    driver: bridge

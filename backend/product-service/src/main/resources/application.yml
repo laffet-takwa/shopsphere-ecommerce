@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8082}
+spring:
+  application:
+    name: product-service
+  datasource:
+    url: ${PRODUCT_DB_URL:jdbc:postgresql://localhost:5432/shopsphere_products}
+    username: ${POSTGRES_USER:shopsphere}
+    password: ${POSTGRES_PASSWORD:shopsphere_dev}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

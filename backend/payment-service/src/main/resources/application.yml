@@ -1,0 +1,35 @@
+server:
+  port: ${SERVER_PORT:8085}
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: ${PAYMENT_DB_URL:jdbc:postgresql://localhost:5432/shopsphere_payments}
+    username: ${POSTGRES_USER:shopsphere}
+    password: ${POSTGRES_PASSWORD:shopsphere_dev}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    properties:
+      # Plain JSON only: no Java class name on the wire for consumers to resolve.
+      spring.json.add.type.headers: false
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+shopsphere:
+  payment:
+    # Simulated processor limit: orders above this amount are declined, which exercises the
+    # payment.failed -> order cancelled -> stock released path.
+    decline-above-amount: ${PAYMENT_DECLINE_ABOVE_AMOUNT:10000}

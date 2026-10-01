@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shopsphere-config
+  namespace: shopsphere
+data:
+  EUREKA_URL: http://discovery-server:8761/eureka/
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  MONGODB_URI: mongodb://mongodb:27017/shopsphere_inventory
+  AUTH_DB_URL: jdbc:postgresql://postgres:5432/shopsphere_auth
+  PRODUCT_DB_URL: jdbc:postgresql://postgres:5432/shopsphere_products
+  ORDER_DB_URL: jdbc:postgresql://postgres:5432/shopsphere_orders
+  PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/shopsphere_payments
+  PAYMENT_DECLINE_ABOVE_AMOUNT: "10000"
+  LOGSTASH_DESTINATION: logstash:5000
+  CORS_ALLOWED_ORIGINS: http://shopsphere.local

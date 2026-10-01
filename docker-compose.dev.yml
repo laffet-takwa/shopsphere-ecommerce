@@ -1,0 +1,13 @@
+services:
+  auth-service:
+    ports: ["8081:8081"]
+  product-service:
+    ports: ["8082:8082"]
+  order-service:
+    ports: ["8083:8083"]
+  inventory-service:
+    ports: ["8084:8084"]
+  payment-service:
+    ports: ["8085:8085"]
+  notification-service:
+    ports: ["8086:8086"]

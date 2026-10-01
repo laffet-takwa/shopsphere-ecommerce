@@ -1,0 +1,26 @@
+# Java and Maven
+target/
+*.class
+*.log
+
+# Node and Vite
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Local data
+data/
+coverage/

@@ -1,0 +1,48 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: auth
+          uri: lb://auth-service
+          predicates: [Path=/api/auth/**]
+        - id: products
+          uri: lb://product-service
+          predicates: [Path=/api/products/**]
+        - id: orders
+          uri: lb://order-service
+          predicates: [Path=/api/orders/**]
+        - id: inventory
+          uri: lb://inventory-service
+          predicates: [Path=/api/inventory/**]
+        - id: payments
+          uri: lb://payment-service
+          predicates: [Path=/api/payments/**]
+        - id: notifications
+          uri: lb://notification-service
+          predicates: [Path=/api/notifications/**]
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ["http://localhost:3000", "http://localhost:5173"]
+            allowedMethods: [GET, POST, PUT, DELETE, OPTIONS]
+            allowedHeaders: [Authorization, Content-Type]
+            allowCredentials: true
+app:
+  jwt:
+    secret: ${JWT_SECRET:ZGV2LW9ubHktc2VjcmV0LWtleS1tdXN0LWJlLWNoYW5nZWQtMzItYnl0ZXM=}
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-pipeline
+  namespace: shopsphere
+data:
+  logstash.conf: |
+    input { tcp { port => 5000 codec => json_lines } }
+    output {
+      elasticsearch { hosts => ["http://elasticsearch:9200"] index => "shopsphere-logs-%{+YYYY.MM.dd}" }
+      stdout { codec => json_lines }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: shopsphere
+spec:
+  selector: { app: elasticsearch }
+  ports: [{ name: http, port: 9200, targetPort: 9200 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  namespace: shopsphere
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: elasticsearch } }
+  template:
+    metadata: { labels: { app: elasticsearch } }
+    spec:
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.15.5
+          ports: [{ containerPort: 9200 }]
+          env:
+            - { name: discovery.type, value: single-node }
+            - { name: xpack.security.enabled, value: "false" }
+            - { name: ES_JAVA_OPTS, value: -Xms512m -Xmx512m }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: 2, memory: 2Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+  namespace: shopsphere
+spec:
+  selector: { app: logstash }
+  ports: [{ name: tcp-json, port: 5000, targetPort: 5000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: shopsphere
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: logstash } }
+  template:
+    metadata: { labels: { app: logstash } }
+    spec:
+      containers:
+        - name: logstash
+          image: docker.elastic.co/logstash/logstash:8.15.5
+          ports: [{ containerPort: 5000 }]
+          volumeMounts:
+            - { name: pipeline, mountPath: /usr/share/logstash/pipeline }
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { cpu: 1, memory: 1Gi }
+      volumes:
+        - name: pipeline
+          configMap: { name: logstash-pipeline }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: shopsphere
+spec:
+  selector: { app: kibana }
+  ports: [{ name: http, port: 5601, targetPort: 5601 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: shopsphere
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: kibana } }
+  template:
+    metadata: { labels: { app: kibana } }
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:8.15.5
+          ports: [{ containerPort: 5601 }]
+          env:
+            - { name: ELASTICSEARCH_HOSTS, value: http://elasticsearch:9200 }
+            - { name: TELEMETRY_ENABLED, value: "false" }
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { cpu: 1, memory: 1Gi }

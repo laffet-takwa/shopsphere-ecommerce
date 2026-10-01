@@ -1,0 +1,29 @@
+server:
+  port: ${SERVER_PORT:8081}
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: ${AUTH_DB_URL:jdbc:postgresql://localhost:5432/shopsphere_auth}
+    username: ${POSTGRES_USER:shopsphere}
+    password: ${POSTGRES_PASSWORD:shopsphere_dev}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+app:
+  jwt:
+    secret: ${JWT_SECRET:ZGV2LW9ubHktc2VjcmV0LWtleS1tdXN0LWJlLWNoYW5nZWQtMzItYnl0ZXM=}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+  bootstrap-admin:
+    email: ${SHOPSPHERE_ADMIN_EMAIL:}
+    password: ${SHOPSPHERE_ADMIN_PASSWORD:}
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
