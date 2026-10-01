@@ -38,11 +38,9 @@ class PaymentProcessorTest {
     @InjectMocks
     private PaymentProcessor processor;
 
-    private Payment saved() {
-        Payment payment = new Payment(ORDER_ID, USER_ID, new BigDecimal("49.00"),
-                PaymentStatus.SUCCESS, "SIM-1");
-        when(payments.save(any(Payment.class))).thenReturn(payment);
-        return payment;
+    /** Echoes the saved entity back so assertions observe the status the processor actually chose. */
+    private void saved() {
+        when(payments.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
