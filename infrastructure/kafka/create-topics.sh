@@ -15,6 +15,7 @@ BOOTSTRAP="${KAFKA_BOOTSTRAP:-kafka:9092}"
 PARTITIONS="${KAFKA_TOPIC_PARTITIONS:-3}"
 REPLICATION="${KAFKA_REPLICATION_FACTOR:-1}"
 TIMEOUT="${KAFKA_INIT_TIMEOUT:-60}"
+KAFKA_TOPICS="${KAFKA_TOPICS:-/opt/kafka/bin/kafka-topics.sh}"
 
 TOPICS=(
   order.created
@@ -27,24 +28,24 @@ TOPICS=(
 
 echo "Waiting for Kafka at ${BOOTSTRAP} (timeout ${TIMEOUT}s)"
 for _ in $(seq 1 "${TIMEOUT}"); do
-  if kafka-topics.sh --bootstrap-server "${BOOTSTRAP}" --list >/dev/null 2>&1; then
+  if "${KAFKA_TOPICS}" --bootstrap-server "${BOOTSTRAP}" --list >/dev/null 2>&1; then
     echo "Kafka is available."
     break
   fi
   sleep 1
 done
 
-if ! kafka-topics.sh --bootstrap-server "${BOOTSTRAP}" --list >/dev/null 2>&1; then
+if ! "${KAFKA_TOPICS}" --bootstrap-server "${BOOTSTRAP}" --list >/dev/null 2>&1; then
   echo "Kafka did not become available within ${TIMEOUT}s" >&2
   exit 1
 fi
 
 for topic in "${TOPICS[@]}"; do
-  if kafka-topics.sh --bootstrap-server "${BOOTSTRAP}" --list 2>/dev/null | grep -qx "${topic}"; then
+  if "${KAFKA_TOPICS}" --bootstrap-server "${BOOTSTRAP}" --list 2>/dev/null | grep -qx "${topic}"; then
     echo "Topic ${topic} already exists, leaving it unchanged."
     continue
   fi
-  kafka-topics.sh \
+  "${KAFKA_TOPICS}" \
     --bootstrap-server "${BOOTSTRAP}" \
     --create \
     --topic "${topic}" \
@@ -56,4 +57,4 @@ for topic in "${TOPICS[@]}"; do
 done
 
 echo "ShopSphere topics are ready:"
-kafka-topics.sh --bootstrap-server "${BOOTSTRAP}" --list | grep -E '^(order|inventory|payment)\.'
+"${KAFKA_TOPICS}" --bootstrap-server "${BOOTSTRAP}" --list | grep -E '^(order|inventory|payment)\.'

@@ -45,7 +45,6 @@ services:
     ports: ["27017:27017"]
     volumes:
       - mongo_data:/data/db
-      - ./infrastructure/mongodb/init.js:/docker-entrypoint-initdb.d/10-shopsphere.js:ro
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 5s

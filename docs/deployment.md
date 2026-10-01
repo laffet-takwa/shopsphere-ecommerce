@@ -4,9 +4,20 @@
 
 Copy `.env.example` to `.env`, set a strong random JWT secret and local database password, then run `docker compose up --build`. Compose uses one-node Kafka in KRaft mode, one PostgreSQL instance with four separate databases, separate MongoDB databases, and an unsecured single-node Elasticsearch for local demonstration. `docker-compose.dev.yml` additionally publishes service ports for debugging.
 
-A one-shot `kafka-init` container creates the six event topics with three partitions before any service starts, so partition counts are a deliberate choice rather than a broker default. It is safe to re-run. MongoDB indexes are applied on first start from `infrastructure/mongodb/init.js`.
+A one-shot `kafka-init` container creates the six event topics with three partitions before any service starts, so partition counts are a deliberate choice rather than a broker default. It is safe to re-run. MongoDB indexes are created by Spring Data from the `@Indexed` annotations on the document classes, since `auto-index-creation` is enabled; `infrastructure/mongodb/README.md` explains why no `init.js` hook is shipped.
 
 Useful checks: Eureka dashboard `http://localhost:8761`, gateway health `http://localhost:8080/actuator/health`, Kibana `http://localhost:5601`, and Elasticsearch `http://localhost:9200`. Search the `shopsphere-logs-*` index in Kibana after creating requests.
+
+### Rebuilding a single service
+
+`docker compose up -d --force-recreate <service>` gives the container a new IP, but the gateway keeps the address it learned from Eureka until that registration expires. Requests in that window fail with a gateway 500 and a `UnknownHostException` naming the dead container, even though the service itself is healthy. Restart the gateway to force re-resolution:
+
+```bash
+docker compose up -d --force-recreate product-service
+docker compose restart api-gateway
+```
+
+The same applies to any deploy that replaces containers behind discovery. Confirm the new instance in the Eureka dashboard before treating a gateway 500 as an application fault.
 
 ## Kubernetes
 

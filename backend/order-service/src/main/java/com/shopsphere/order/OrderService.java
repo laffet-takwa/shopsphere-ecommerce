@@ -96,7 +96,8 @@ public class OrderService {
      */
     @Transactional
     public OrderEntity ship(Long orderId) {
-        OrderEntity order = orders.findById(orderId)
+        // Fetch-joined so the response can still be mapped after this transaction commits.
+        OrderEntity order = orders.findWithItemsById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
         if (!order.ship()) {

@@ -34,7 +34,7 @@ public class OrderController {
     }
     @GetMapping("/{id}")
     public OrderResponse get(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
-        return OrderResponse.from(orders.findById(id).filter(order -> order.getUserId().equals(userId))
+        return OrderResponse.from(orders.findWithItemsById(id).filter(order -> order.getUserId().equals(userId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
     }
     @GetMapping("/user/{userId}")
@@ -45,7 +45,7 @@ public class OrderController {
     }
     @PutMapping("/{id}/cancel")
     public OrderResponse cancel(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
-        OrderEntity order = orders.findById(id).filter(value -> value.getUserId().equals(userId))
+        OrderEntity order = orders.findWithItemsById(id).filter(value -> value.getUserId().equals(userId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (order.getStatus() != OrderStatus.PENDING) throw new ResponseStatusException(HttpStatus.CONFLICT, "Order can no longer be cancelled");
         order.cancel();
