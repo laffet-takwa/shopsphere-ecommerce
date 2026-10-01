@@ -94,6 +94,6 @@ Consumers are idempotent: order-service persists each handled `eventId`, guarded
 - `docs/`: architecture, API, event, database, and deployment notes.
 - `.github/workflows/ci.yml`: service tests and frontend production build.
 
-## Known Portfolio Boundaries
+## Known Portfolio Boundaries !
 
 This is a runnable local reference architecture, not a claim of production readiness. It uses a single PostgreSQL container with one database per service, single-node Kafka without replication or a schema registry, synchronous catalog price lookups, and a simulated processor that declines deterministically above a configurable limit rather than talking to a real one. For production, replace schema auto-update with versioned migrations, add a transactional outbox so a database commit and its event cannot diverge, add distributed tracing and rate limiting, move secrets to a secret manager, and use redundant/secured infrastructure. See [deployment](docs/deployment.md).
