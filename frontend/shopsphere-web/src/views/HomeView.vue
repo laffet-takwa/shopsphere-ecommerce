@@ -113,7 +113,9 @@ function browseCategory(name: string): void {
         <header class="section-head">
           <div>
             <h2 class="section-head__title">Shop by category</h2>
-            <p class="section-head__subtitle">Six departments, one checkout.</p>
+            <p class="section-head__subtitle">
+              {{ products.categories.length }} departments, one checkout.
+            </p>
           </div>
           <RouterLink class="section-head__link" :to="{ name: 'catalog' }">
             View all <ArrowRight :size="16" aria-hidden="true" />
