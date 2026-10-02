@@ -90,6 +90,7 @@ function toggleWishlist(): void {
   position: relative;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -187,6 +188,9 @@ function toggleWishlist(): void {
   font-weight: var(--weight-semibold);
   line-height: var(--leading-snug);
   letter-spacing: -0.01em;
+  /* Long product names must wrap rather than widen the card. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .product-card__name a {

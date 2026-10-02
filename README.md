@@ -18,6 +18,42 @@ ShopSphere is a cloud-native portfolio storefront built as eight independently b
    <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1500&q=85" alt="ShopSphere storefront hero: a calm, considered living space" width="900" />
 </p>
 
+## Interface
+
+All screens below are real captures of the running application, taken against live data.
+
+**Storefront**
+
+| Catalog | Product detail | Cart |
+| --- | --- | --- |
+| <img src="docs/screenshots/02-catalog.png" alt="Catalog with filter rail" width="300" /> | <img src="docs/screenshots/03-product-detail.png" alt="Product detail with gallery" width="300" /> | <img src="docs/screenshots/09-cart.png" alt="Cart with order summary" width="300" /> |
+
+| Checkout | Order confirmation | Order timeline |
+| --- | --- | --- |
+| <img src="docs/screenshots/10-checkout.png" alt="Multi-step checkout" width="300" /> | <img src="docs/screenshots/11-confirmation.png" alt="Order confirmed" width="300" /> | <img src="docs/screenshots/13-order-detail.png" alt="Order status timeline" width="300" /> |
+
+**Account**
+
+| Dashboard | Orders | Notifications |
+| --- | --- | --- |
+| <img src="docs/screenshots/14-account.png" alt="Customer dashboard" width="300" /> | <img src="docs/screenshots/12-orders.png" alt="Order history" width="300" /> | <img src="docs/screenshots/15-notifications.png" alt="Notification centre" width="300" /> |
+
+**Admin console**
+
+| Dashboard | Products | Inventory |
+| --- | --- | --- |
+| <img src="docs/screenshots/16-admin-dashboard.png" alt="Admin dashboard with metrics" width="300" /> | <img src="docs/screenshots/17-admin-products.png" alt="Product management table" width="300" /> | <img src="docs/screenshots/19-admin-inventory.png" alt="Inventory with stock levels" width="300" /> |
+
+| Orders | Analytics | Settings |
+| --- | --- | --- |
+| <img src="docs/screenshots/18-admin-orders.png" alt="Admin order management" width="300" /> | <img src="docs/screenshots/21-admin-analytics.png" alt="Analytics" width="300" /> | <img src="docs/screenshots/22-admin-settings.png" alt="Platform settings" width="300" /> |
+
+**Responsive** — the layout adapts rather than shrinking, and orders collapse to cards on narrow screens.
+
+| Mobile home | Mobile catalog | Mobile account |
+| --- | --- | --- |
+| <img src="docs/screenshots/23-mobile-home.png" alt="Mobile home at 390px" width="180" /> | <img src="docs/screenshots/24-mobile-catalog.png" alt="Mobile catalog at 390px" width="180" /> | <img src="docs/screenshots/29-mobile-account.png" alt="Mobile account at 390px" width="180" /> |
+
 ## Architecture at a Glance
 
 ```mermaid

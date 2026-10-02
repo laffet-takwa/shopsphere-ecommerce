@@ -657,6 +657,16 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+/*
+ * Grid items default to min-width:auto, so any unbreakable content - a long alt
+ * text on a failed image, a long SKU, a wide table - can push a track past the
+ * viewport and give the whole page a horizontal scrollbar. Zeroing the minimum
+ * keeps every card inside its column at every breakpoint.
+ */
+.grid-products > * {
+  min-width: 0;
+}
+
 @media (max-width: 1100px) {
   .grid-products {
     grid-template-columns: repeat(3, minmax(0, 1fr));
