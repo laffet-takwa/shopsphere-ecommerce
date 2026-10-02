@@ -20,6 +20,7 @@ jobs:
           - inventory-service
           - payment-service
           - notification-service
+          - demo-service
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -29,6 +30,33 @@ jobs:
           cache: maven
       - name: Verify ${{ matrix.service }}
         run: mvn -B -f backend/${{ matrix.service }}/pom.xml verify
+
+  # The demo image compiles the sibling services through relative source paths, so a layout
+  # regression produces a boot jar with an empty BOOT-INF/classes that builds fine and then fails
+  # with ClassNotFoundException. Building the image here is what catches that.
+  demo-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build demo image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/demo.Dockerfile
+          push: false
+          load: true
+          tags: shopsphere-demo:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Assert the jar contains application classes
+        run: |
+          cid=$(docker create shopsphere-demo:ci)
+          docker cp "$cid:/app/app.jar" demo.jar
+          docker rm "$cid"
+          unzip -l demo.jar | grep -q 'BOOT-INF/classes/com/shopsphere/demo/DemoApplication.class'
+          unzip -l demo.jar | grep -q 'BOOT-INF/classes/com/shopsphere/product/Product.class'
+          echo "demo jar contains the application classes"
 
   frontend:
     runs-on: ubuntu-latest

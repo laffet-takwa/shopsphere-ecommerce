@@ -1,0 +1,17 @@
+-- Demo catalogue seed.
+--
+-- Copied from product-service so the hosted demo starts with a browsable storefront. That file is
+-- not loaded here because the demo module does not add the services' resource directories.
+-- ON CONFLICT keeps it safe to re-run on every boot.
+INSERT INTO products (id, name, description, price, category, sku, image_url, active, created_at, updated_at) VALUES
+(1001, 'Arc Ceramic Table Lamp', 'A softly sculpted ceramic lamp with a warm linen shade for slow evenings.', 128.00, 'Home', 'HOME-LAMP-01', 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=85', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1002, 'Form Lounge Chair', 'A considered reading chair with a solid oak frame and textured natural upholstery.', 549.00, 'Home', 'HOME-CHAIR-02', 'https://images.unsplash.com/photo-1598300056393-4aac492f4344?auto=format&fit=crop&w=900&q=85', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1003, 'Everyday Carry Charger', 'A compact dual-port charger designed to travel neatly between desk and weekend bag.', 44.00, 'Tech', 'TECH-CHARGER-03', 'https://images.unsplash.com/photo-1609592806596-b43badaf4a3e?auto=format&fit=crop&w=900&q=85', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1004, 'Studio Wireless Headphones', 'Comfort-first over-ear sound with a clean silhouette and all-day battery life.', 189.00, 'Tech', 'TECH-AUDIO-04', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=85', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1005, 'Daily Ritual Oil', 'A light botanical body oil with a calm, green scent and a quick-absorbing finish.', 36.00, 'Wellness', 'WELL-OIL-05', 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=900&q=85', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1006, 'Soft Form Candle', 'A clean-burning soy candle with notes of cedar leaf, fig and quiet mornings.', 32.00, 'Wellness', 'WELL-CANDLE-06', 'https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=900&q=85', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1007, 'Field Notes Watch', 'A dependable everyday watch with a brushed steel case and understated dial.', 215.00, 'Accessories', 'ACC-WATCH-07', 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=85', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1008, 'Weekend Canvas Tote', 'A sturdy, responsibly made carryall with room for market finds and a long way home.', 58.00, 'Accessories', 'ACC-TOTE-08', 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=85', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (sku) DO NOTHING;
+
+SELECT setval(pg_get_serial_sequence('products', 'id'), GREATEST((SELECT COALESCE(MAX(id), 1) FROM products), 1));

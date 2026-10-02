@@ -1,0 +1,60 @@
+# Render blueprint for the hosted ShopSphere demo.
+#
+# Deploy with:  New -> Blueprint -> point at this repository.
+#
+# One web service only, by design. Render's free web services sleep after ~15 minutes idle and have
+# no persistent disk, so the real eight-service topology cannot be hosted there: the services could
+# not resolve each other after a cold start and Kafka could not persist anything. backend/demo-service
+# therefore runs the same service classes in one process. See docs/deployment-hosting.md.
+#
+# Before the first deploy, create the database and set the values below:
+#   DB_URL           pooled JDBC URL from Neon (append ?sslmode=require)
+#   DB_USERNAME      database user
+#   DB_PASSWORD      database password
+#   MONGODB_URI      MongoDB Atlas connection string
+#   JWT_SECRET       openssl rand -base64 48
+#   SHOPSPHERE_ADMIN_EMAIL / SHOPSPHERE_ADMIN_PASSWORD   admin login for /admin
+# Optionally, to restore the full event-driven order flow:
+#   KAFKA_BOOTSTRAP_SERVERS  Redpanda Cloud brokers (Kafka-compatible)
+#   KAFKA_ENABLED            true
+
+services:
+  - type: web
+    name: shopsphere-demo-api
+    runtime: docker
+    # Context is backend/ so the image can compile the other services' sources, which demo-service
+    # depends on rather than duplicating.
+    dockerfilePath: ./backend/demo.Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /actuator/health
+    # A cold start compiles nothing but still boots Spring, so allow a generous window.
+    autoDeploy: true
+    envVars:
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=70 -XX:+UseSerialGC"
+      - key: SERVER_PORT
+        value: "8080"
+      - key: DDL_AUTO
+        value: "update"
+      - key: SEED_MODE
+        value: "always"
+      - key: KAFKA_ENABLED
+        value: "false"
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SHOPSPHERE_ADMIN_EMAIL
+        sync: false
+      - key: SHOPSPHERE_ADMIN_PASSWORD
+        sync: false
+      # Set to the Netlify origin, e.g. https://shopsphere.netlify.app
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false

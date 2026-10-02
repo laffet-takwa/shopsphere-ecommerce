@@ -85,13 +85,23 @@ Each backend directory has its own `pom.xml`. Build any one independently with `
 
 Consumers are idempotent: order-service persists each handled `eventId`, guarded status transitions reject late or duplicate messages, and reservations and payments are pinned per order.
 
+## Live Demo
+
+A hosted deployment is available so this can be shown without installing anything: the storefront on
+Netlify and the API on Render, both on free tiers, backed by Neon (PostgreSQL) and MongoDB Atlas.
+`backend/demo-service` runs the same service classes in one process, because free hosts sleep when
+idle and cannot resolve an eight-service topology after a cold start. The trade-off, the setup steps
+and the honest limits are in [docs/deployment-hosting.md](docs/deployment-hosting.md). The local
+topology in the sections above remains the real one.
+
 ## Repository Map
 
-- `backend/`: eight independent Java 17 / Spring Boot projects.
+- `backend/`: eight independent Java 17 / Spring Boot projects, plus `demo-service` (a single deployable that compiles the six service source trees for hosting).
 - `frontend/shopsphere-web/`: Vue 3, TypeScript, Vite, Pinia, Axios, and Lucide.
 - `infrastructure/`: Compose Dockerfiles, PostgreSQL initialization, Kafka topic provisioning, MongoDB indexes, and the ELK pipeline.
 - `kubernetes/`: namespace-scoped application and infrastructure manifests.
-- `docs/`: architecture, API, event, database, and deployment notes.
+- `netlify.toml` / `render.yaml`: hosted demo build and infrastructure definitions.
+- `docs/`: architecture, API, event, database, deployment, and hosting notes.
 - `.github/workflows/ci.yml`: service tests and frontend production build.
 
 ## Known Portfolio Boundaries 
